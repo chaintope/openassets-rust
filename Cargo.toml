@@ -1,6 +1,7 @@
 [package]
-name = "openassets-rust"
+name = "openassets"
 version = "0.1.0"
 authors = ["azuchi <azuchi@chaintope.com>"]
 
 [dependencies]
+bitcoin = "0.18.0"
