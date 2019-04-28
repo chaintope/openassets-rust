@@ -25,7 +25,6 @@ impl<D: Decoder> Decodable<D> for Payload{
             return Err(Error::ParseFailed("Invalid version."));
         }
 
-
         let VarInt(count): VarInt = Decodable::consensus_decode(d)?;
         let mut quantities: Vec<u64> = Vec::with_capacity(count as usize);
 
@@ -43,7 +42,6 @@ impl<D: Decoder> Decodable<D> for Payload{
 
         let payload = Payload { quantities, metadata: Decodable::consensus_decode(d)? };
         return Ok(payload);
-
     }
 }
 
@@ -53,6 +51,7 @@ pub trait TxOutExt{
 
     fn is_openassets_marker(&self) -> bool;
 
+    fn get_oa_payload(&self) -> Result<Payload, Error>;
 }
 
 impl TxOutExt for TxOut{
@@ -77,14 +76,17 @@ impl TxOutExt for TxOut{
 
     fn is_openassets_marker(&self) -> bool {
         if self.script_pubkey.is_op_return() {
-            let op_return_data: Vec<u8> = self.get_op_return_data();
-            let payload: Result<Payload, _> = deserialize(&op_return_data);
-            println!("isOk = {:?}", payload.is_ok());
-            println!("is_err = {:?}", payload.is_err());
+            let payload: Result<Payload, _> = self.get_oa_payload();
             return payload.is_ok();
         } else {
             return false;
         }
+    }
+
+    fn get_oa_payload(&self) -> Result<Payload, Error> {
+        let op_return_data: Vec<u8> = self.get_op_return_data();
+        let payload: Result<Payload, _> = deserialize(&op_return_data);
+        return payload;
     }
 }
 
@@ -94,20 +96,19 @@ mod tests {
     use bitcoin::blockdata::script::Builder;
     use bitcoin::util::misc::hex_bytes;
     use hex::decode as hex_decode;
-
-    use openassets::marker_output::TxOutExt;
+    use openassets::marker_output::{TxOutExt, Payload};
 
     #[test]
     fn test_op_return_data(){
         // op return data
         let script: Script = Builder::from(hex_decode("6a244f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap()).into_script();
         let txout = TxOut {value: 0, script_pubkey: script};
-        assert_eq!(txout.get_op_return_data(), hex_bytes("4f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap());
+        assert_eq!(hex_bytes("4f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap(), txout.get_op_return_data());
 
         // no op return
         let script: Script = Builder::from(hex_decode("76a91446c2fbfbecc99a63148fa076de58cf29b0bcf0b088ac").unwrap()).into_script();
         let no_data = TxOut {value: 0, script_pubkey: script};
-        assert_eq!(no_data.get_op_return_data().len(), 0);
+        assert_eq!(0, no_data.get_op_return_data().len());
     }
 
     #[test]
@@ -149,4 +150,18 @@ mod tests {
         assert!(!invalid_marker.is_openassets_marker());
     }
 
+    #[test]
+    fn test_get_oa_payload(){
+        // valid marker
+        let marker_output = TxOut { value: 0, script_pubkey: Builder::from(hex_decode("6a244f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap()).into_script() };
+        let payload: Payload = marker_output.get_oa_payload().unwrap();
+        assert_eq!(vec![100, 0, 123], payload.quantities);
+        assert_eq!("u=https://cpr.sm/5YgSU1Pg-q", payload.metadata);
+
+        // empty metadata
+        let marker_output = TxOut { value: 0, script_pubkey: Builder::from(hex_decode("6a084f41010002014400").unwrap()).into_script() };
+        let payload: Payload = marker_output.get_oa_payload().unwrap();
+        assert_eq!(vec![1, 68], payload.quantities);
+        assert_eq!("", payload.metadata);
+    }
 }
