@@ -1,6 +1,6 @@
 
 extern crate bitcoin;
 extern crate hex;
-extern crate leb128;
+extern crate byteorder;
 
 pub mod openassets;

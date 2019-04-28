@@ -6,6 +6,7 @@ authors = ["azuchi <azuchi@chaintope.com>"]
 [dependencies]
 bitcoin = "0.18.0"
 leb128 = "0.2.3"
+byteorder = "1.2"
 
 [dependencies.hex]
 version = "=0.3.2"
