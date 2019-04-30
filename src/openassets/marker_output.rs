@@ -1,16 +1,38 @@
 use bitcoin::blockdata::script::Instruction;
 use bitcoin::{TxOut, VarInt};
-use bitcoin::consensus::{Decodable, Decoder, deserialize};
+use bitcoin::consensus::{Decodable, Decoder, deserialize, Encoder, Encodable};
 use bitcoin::consensus::encode::Error;
 
 pub const MARKER: u16 = 0x4f41;
 pub const VERSION: u16 = 0x0100;
 
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Payload{
 
     pub quantities: Vec<u64>,
     pub metadata: String
 
+}
+
+impl<S: Encoder> Encodable<S> for Payload{
+    fn consensus_encode(&self, s: &mut S) -> Result<(), Error> {
+        MARKER.to_be().consensus_encode(s)?;
+        VERSION.to_be().consensus_encode(s)?;
+        VarInt(self.quantities.len() as u64).consensus_encode(s)?;
+        // asset quantity
+        for &q in self.quantities.iter() {
+            let mut value: u64 = q;
+            loop {
+                let mut byte = value & 0x7F;
+                value >>= 7;
+                if value != 0 {byte |= 0x80;}
+                Encodable::consensus_encode(&(byte as u8), s)?;
+                if value == 0 { break;}
+            }
+        };
+        self.metadata.consensus_encode(s)?;
+        Ok(())
+    }
 }
 
 impl<D: Decoder> Decodable<D> for Payload{
@@ -97,6 +119,7 @@ mod tests {
     use bitcoin::util::misc::hex_bytes;
     use hex::decode as hex_decode;
     use openassets::marker_output::{TxOutExt, Payload};
+    use bitcoin::consensus::serialize;
 
     #[test]
     fn test_op_return_data(){
@@ -163,5 +186,29 @@ mod tests {
         let payload: Payload = marker_output.get_oa_payload().unwrap();
         assert_eq!(vec![1, 68], payload.quantities);
         assert_eq!("", payload.metadata);
+
+        // test for leb128
+        let marker_output = TxOut { value: 0, script_pubkey: Builder::from(hex_decode("6a0b4f410100037f8001b96400").unwrap()).into_script() };
+        let payload: Payload = marker_output.get_oa_payload().unwrap();
+        assert_eq!(vec![127, 128, 12857], payload.quantities);
+    }
+
+    #[test]
+    fn test_encode_payload() {
+        let metadata = "u=https://cpr.sm/5YgSU1Pg-q".to_string();
+        let payload = Payload { quantities: vec![100, 0, 123], metadata };
+        let result: Vec<u8> = serialize(&payload);
+        assert_eq!(hex_decode("4f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap(), result);
+
+        let metadata = "".to_string();
+        let payload = Payload { quantities: vec![1, 68], metadata };
+        let result:  Vec<u8> = serialize(&payload);
+        assert_eq!(hex_decode("4f41010002014400").unwrap(), result);
+
+        // test for leb128
+        let metadata = "".to_string();
+        let payload = Payload { quantities: vec![127, 128, 12857], metadata};
+        let result:  Vec<u8> = serialize(&payload);
+        assert_eq!(hex_decode("4f410100037f8001b96400").unwrap(), result);
     }
 }
