@@ -2,6 +2,11 @@
 name = "openassets"
 version = "0.1.0"
 authors = ["azuchi <azuchi@chaintope.com>"]
+license = "MIT"
+description = "The implementation of the Open Assets Protocol for Rust."
+repository = "https://github.com/chaintope/openassets-rust"
+readme = "README.md"
+keywords = ["open assets protocol", "bitcoin"]
 
 [dependencies]
 bitcoin = "0.18.0"
