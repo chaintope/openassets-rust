@@ -26,8 +26,7 @@ impl Display for AssetId{
         let mut prefixed = [0; 21];
         prefixed[0] = match self.network {
             bitcoin::network::constants::Network::Bitcoin => 0x17,
-            bitcoin::network::constants::Network::Testnet => 0x73,
-            bitcoin::network::constants::Network::Regtest => 0x73
+            bitcoin::network::constants::Network::Testnet | bitcoin::network::constants::Network::Regtest => 0x73
         };
         prefixed[1..].copy_from_slice(&self.hash[..]);
         base58::check_encode_slice_to_fmt(fmt, &prefixed[..])
