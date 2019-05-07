@@ -1,4 +1,4 @@
-# openassets-rust [![openassets at docs.rs](https://docs.rs/openassets/badge.svg)](https://docs.rs/openassets) [![Build Status](https://travis-ci.org/chaintope/openassets-rust.svg?branch=master)](https://travis-ci.org/chaintope/openassets-rust)  [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
+# openassets-rust [![openassets at crates.io](https://img.shields.io/crates/v/openassets.svg)](https://crates.io/crates/openassets) [![Build Status](https://travis-ci.org/chaintope/openassets-rust.svg?branch=master)](https://travis-ci.org/chaintope/openassets-rust)  [![MIT License](http://img.shields.io/badge/license-MIT-blue.svg?style=flat)](LICENSE)
 
 The implementation of the [Open Assets Protocol](https://github.com/OpenAssets/open-assets-protocol) for Rust.
 
