@@ -6,7 +6,7 @@ license = "MIT"
 description = "The implementation of the Open Assets Protocol for Rust."
 repository = "https://github.com/chaintope/openassets-rust"
 readme = "README.md"
-keywords = ["open assets protocol", "bitcoin"]
+keywords = ["openassets", "bitcoin"]
 
 [dependencies]
 bitcoin = "0.18.0"
