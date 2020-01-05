@@ -9,9 +9,10 @@ bitcoin::TxOut supports marker output.
 ```rust
 use bitcoin::{Script, TxOut};
 use bitcoin::blockdata::script::Builder;
+use bitcoin::consensus::serialize;
 use bitcoin::util::misc::hex_bytes;
 use hex::decode as hex_decode;
-use openassets::marker_output::{TxOutExt, Payload};
+use openassets::marker_output::{Metadata, TxOutExt, Payload};
 
 let marker_output = TxOut {value: 0, script_pubkey: Builder::from(hex_decode("6a244f4101000364007b1b753d68747470733a2f2f6370722e736d2f35596753553150672d71").unwrap()).into_script()};
 
@@ -25,14 +26,14 @@ let payload: Payload = marker_output.get_oa_payload().unwrap();
 
 // asset quantities
 payload.quantities;
-=> [127, 128, 12857]
+=> [100, 0, 123]
 
 // metadata
-payload.metadata
+payload.metadata.to_string()
 => "u=https://cpr.sm/5YgSU1Pg-q"
 
 // encode payload
-let metadata = "u=https://cpr.sm/5YgSU1Pg-q".to_string();
+let metadata = Metadata("u=https://cpr.sm/5YgSU1Pg-q".as_bytes().to_vec());
 let payload = Payload { quantities: vec![100, 0, 123], metadata };
 let serialized_marker: Vec<u8> = serialize(&payload);
 ```
